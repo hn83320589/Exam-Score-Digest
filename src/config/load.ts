@@ -10,14 +10,14 @@ export async function loadConfig(path: string = DEFAULT_CONFIG_PATH): Promise<Di
   try {
     text = await readFile(path, 'utf8');
   } catch (error) {
-    throw new ConfigError(`無法讀取設定檔 ${path}：${error instanceof Error ? error.message : String(error)}`);
+    throw new ConfigError(`無法讀取設定檔 ${path}：${error instanceof Error ? error.message : String(error)}`, { cause: error });
   }
 
   let raw: unknown;
   try {
     raw = JSON.parse(text.replace(/^\uFEFF/, ''));
   } catch (error) {
-    throw new ConfigError(`設定檔 ${path} 不是有效的 JSON：${error instanceof Error ? error.message : String(error)}`);
+    throw new ConfigError(`設定檔 ${path} 不是有效的 JSON：${error instanceof Error ? error.message : String(error)}`, { cause: error });
   }
 
   try {
