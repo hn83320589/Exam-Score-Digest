@@ -1,0 +1,2 @@
+# 範例資料必須逐位元組保留（Big5 CSV 不含 NUL，git 會誤判為文字檔並在 Windows 上轉換換行）
+sample-data/** -text
