@@ -11,7 +11,16 @@ function hasUtf8Bom(bytes: Uint8Array): boolean {
  * Excel「CSV UTF-8」另存為 UTF-8 + BOM；校務系統匯出與 Excel「CSV（逗號分隔）」為 Big5（CP950）。
  * 先以嚴格模式嘗試 UTF-8，失敗才視為 Big5，避免把 UTF-8 誤判成 Big5 而產生亂碼。
  */
+function hasUtf16Bom(bytes: Uint8Array): boolean {
+  return (bytes[0] === 0xff && bytes[1] === 0xfe) || (bytes[0] === 0xfe && bytes[1] === 0xff);
+}
+
 export function decodeText(bytes: Uint8Array): { text: string; encoding: Exclude<TextEncoding, 'xlsx'> } {
+  if (hasUtf16Bom(bytes)) {
+    throw new Error(
+      '檔案為 UTF-16 編碼（Excel「Unicode 文字」格式，以 Tab 分隔），不是 CSV；請在 Excel 中改用「另存新檔 → CSV UTF-8（逗號分隔）」重新存檔',
+    );
+  }
   if (hasUtf8Bom(bytes)) {
     return { text: new TextDecoder('utf-8').decode(bytes.subarray(UTF8_BOM.length)), encoding: 'utf-8-bom' };
   }

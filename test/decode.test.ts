@@ -15,6 +15,15 @@ describe('decodeText', () => {
     expect(decodeText(Buffer.from(SAMPLE, 'utf8'))).toEqual({ text: SAMPLE, encoding: 'utf-8' });
   });
 
+  it.each([
+    ['UTF-16 LE', [0xff, 0xfe]],
+    ['UTF-16 BE', [0xfe, 0xff]],
+  ])('%s（Excel「Unicode 文字」改副檔名）回報錯誤並提示改存為 CSV UTF-8', (_, bom) => {
+    const bytes = new Uint8Array([...bom, 0x78, 0x5b]);
+
+    expect(() => decodeText(bytes)).toThrow(/Unicode 文字.*CSV UTF-8/);
+  });
+
   it('Big5／CP950（校務系統匯出、Excel「CSV（逗號分隔）」另存）', () => {
     expect(decodeText(iconv.encode(SAMPLE, 'cp950'))).toEqual({ text: SAMPLE, encoding: 'big5' });
   });
