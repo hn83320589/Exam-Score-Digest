@@ -21,7 +21,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "sample": "node --experimental-strip-types scripts/generate-sample.ts"
   },
   "dependencies": {
     "csv-parse": "^7.0.3",
