@@ -22,7 +22,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "sample": "node --experimental-strip-types scripts/generate-sample.ts"
+    "sample": "node --experimental-strip-types scripts/generate-sample.ts",
+    "verify": "node --experimental-strip-types scripts/verify-acceptance.ts"
   },
   "dependencies": {
     "csv-parse": "^7.0.3",
