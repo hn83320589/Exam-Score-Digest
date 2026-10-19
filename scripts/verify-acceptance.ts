@@ -240,7 +240,7 @@ const srcFiles = execFileSync('git', ['ls-files', 'src', 'config', 'scripts'], {
 const srcWithUrl = srcFiles.filter((f) => /https?:\/\//i.test(readFileSync(join(ROOT, f), 'utf8')));
 check(
   'A11',
-  'HTML 報表不引用外部資源；原始碼中搜尋不到 http:// 或 https://',
+  'HTML 報表不引用外部資源；原始碼中搜尋不到任何網址（http／https）',
   externalPatterns.every((p) => !p.test(fullHtml) && !p.test(publicHtml)) && srcWithUrl.length === 0,
   `報表中 script／link／@import／url()／網址皆為 0；${srcFiles.length} 個原始碼檔案中含網址 ${srcWithUrl.length} 個；內嵌 SVG ${(fullHtml.match(/<svg /g) ?? []).length} 張`,
 );
