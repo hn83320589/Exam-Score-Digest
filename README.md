@@ -183,7 +183,11 @@ npm run build     # 編譯到 dist/
 npm run sample    # 重新產生範例資料
 ```
 
-架構與設計決策見 [`docs/DESIGN.md`](docs/DESIGN.md)。主要流程：
+架構與設計決策見 [`docs/DESIGN.md`](docs/DESIGN.md)；驗收測試結果見 [`docs/TEST-REPORT.md`](docs/TEST-REPORT.md)。
+
+```bash
+npm run verify    # 黑箱驗收腳本：執行 CLI 後從輸出檔獨立重算並比對
+```主要流程：
 
 ```
 讀檔（編碼偵測）→ 欄名對應與資料驗證 → 重複學號檢查 → 統計／排名／分布／比較
