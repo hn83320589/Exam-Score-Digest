@@ -92,7 +92,7 @@
 | 項目 | 原因 | 替代驗證 | 建議 |
 |---|---|---|---|
 | 以 Microsoft Excel 實際開啟 `exam-scores.xlsx` | 測試機沒有安裝 Excel／LibreOffice | ExcelJS 讀回比對內容；解開 zip 後以 `xmllint` 確認所有 XML 檔格式正確 | 交付前在 Windows 上以 Excel 開啟一次 |
-| Windows 上的實際執行與 Edge 瀏覽器 | 測試機為 macOS，瀏覽器僅 Chromium | Edge 與 Chrome 同為 Chromium 核心；程式中路徑皆以 `node:path` 處理 | 在繁中 Windows 上執行一次 README 中的指令 |
+| Windows 上的實際執行與 Edge 瀏覽器 | 測試機為 macOS，瀏覽器僅 Chromium | **已由 CI 補上 Windows 執行**（見第 8 節）：`windows-latest` × Node 22／24 的 `npm ci`、lint、typecheck、test、黑箱驗收全數通過。Edge 與 Chrome 同為 Chromium 核心 | 在繁中 Windows 上以 Edge 開啟一次報表 |
 | 真實校務系統匯出的檔案 | 沒有取得真實檔案 | 範例資料模擬 Big5（CP950）CSV 與 xlsx 兩種格式 | 取得一份真實匯出檔試跑，確認欄名都在設定檔的別名內 |
 
 ## 6. 測試過程中發現並修正的問題
@@ -112,3 +112,26 @@ npm test          # 140 個單元與整合測試
 npm run lint      # ESLint
 npm run verify    # 黑箱驗收腳本（需先 npm run build；npm ci 已自動 build）
 ```
+
+## 8. 外部 code review 後的修正（追加）
+
+交付後收到的 code review 指出三個實際資料上會出現的問題，均已修正並補上測試：
+
+| 問題 | 影響 | 修正 | 測試 |
+|---|---|---|---|
+| 來源檔中的姓名已損壞（Excel 以 ANSI 另存時罕用字變成「?」、CP950 造字 `0xFA40` 解碼為私用區 U+E000）時，工具沒有任何警告 | 驗收第 2 條「沒有亂碼或問號」在真實資料上會失守；造字在沒有造字檔的電腦上顯示為方框 | 新增問題類型「姓名含無法辨識的字元」：資料照常匯入，問題清單中提示改用 CSV UTF-8 或 .xlsx 重新匯出；這類警告不影響比較功能的轉學判斷 | `normalize.test.ts`（?、U+E000、U+FFFD、罕用字不誤報）；`import-folder.test.ts` 以實際 CP950 位元組（含 `0xFA40`）重現 |
+| xlsx 中有公式但沒有快取計算結果的儲存格被讀成空白 | 依規則被視為缺考，有分數的學生被靜默排除在排名之外 | 科目欄遇到這種儲存格時列為分數錯誤，提示在 Excel 開啟後重新存檔；非科目欄（如總分公式欄）不受影響 | `read-table.test.ts`、`normalize.test.ts` |
+| Excel「Unicode 文字」（UTF-16）改副檔名為 .csv 時，只顯示「缺少必要欄位」 | 錯誤訊息對老師沒有幫助 | 以 UTF-16 BOM 辨識，提示改存為 CSV UTF-8 | `decode.test.ts`（LE／BE） |
+
+另外補上 `LICENSE`（MIT）與 GitHub Actions CI。
+
+### CI 結果（commit `2dda0b4`）
+
+| 環境 | npm ci | lint | typecheck | test | 黑箱驗收 |
+|---|---|---|---|---|---|
+| ubuntu-latest / Node 22 | ✅ | ✅ | ✅ | ✅ | ✅ |
+| ubuntu-latest / Node 24 | ✅ | ✅ | ✅ | ✅ | ✅ |
+| windows-latest / Node 22 | ✅ | ✅ | ✅ | ✅ | ✅ |
+| windows-latest / Node 24 | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+修正後測試數為 150 個，範例資料的驗收結果不變（11/11，匯入問題仍為 6 筆）。
