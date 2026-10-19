@@ -1,3 +1,4 @@
+import iconv from 'iconv-lite';
 import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -52,5 +53,37 @@ describe('importFolder', () => {
       ['duplicate-id', '702.csv'],
       ['file-error', '703.xlsx'],
     ]);
+  });
+
+  it('CP950 檔案中的造字（0xFA40）與被換成問號的姓名，都列入問題清單', async () => {
+    const cp950 = (text: string): Buffer => iconv.encode(text, 'cp950');
+    const bytes = Buffer.concat([
+      cp950(`${HEADER}\r\n701,1,1120001,謝`),
+      Buffer.from([0xfa, 0x40]),
+      cp950(`廷,80,80,80,80,80,80,80,80\r\n701,2,1120002,邱姿?,80,80,80,80,80,80,80,80\r\n`),
+    ]);
+    const dir = await folderWith({});
+    await writeFile(join(dir, '701.csv'), bytes);
+
+    const result = await importFolder(dir, await loadConfig());
+
+    expect(result.students.map((s) => s.name)).toEqual(['謝廷', '邱姿?']);
+    expect(result.issues.map((i) => [i.kind, i.row])).toEqual([
+      ['suspicious-name', 2],
+      ['suspicious-name', 3],
+    ]);
+  });
+
+  it('姓名警告的資料列照常匯入，不算入「被跳過的學號」', async () => {
+    const dir = await folderWith({
+      '701.csv': `${HEADER}\n701,1,1120001,邱姿?,80,80,80,80,80,80,80,80\n`,
+    });
+
+    const result = await importFolder(dir, await loadConfig());
+
+    expect(result.students.map((s) => s.studentId)).toEqual(['1120001']);
+    expect(result.issues.map((i) => i.kind)).toEqual(['suspicious-name']);
+    expect(result.erroredIds).toEqual(new Set());
+    expect(result.erroredSeats).toEqual(new Set());
   });
 });

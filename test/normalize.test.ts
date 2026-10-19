@@ -100,6 +100,27 @@ describe('normalizeTable', () => {
     expect(result.issues).toMatchObject([{ kind: 'file-error', file: '701.csv', row: 1 }]);
   });
 
+  it.each([
+    ['Excel 另存 ANSI 時被換成問號', '邱姿?', '?'],
+    ['學校造字（CP950 0xFA40 解碼為私用區 U+E000）', '謝廷', 'U+E000'],
+    ['解碼失敗的替代字元', '王�明', 'U+FFFD'],
+  ])('姓名含無法辨識的字元（%s）：照常匯入，但列入問題清單並提示重新匯出', (_, name, shown) => {
+    const result = normalizeTable(table('701.csv', HEADERS, [['701', '3', '1120003', name, ...GOOD]]), config);
+
+    expect(result.students.map((s) => s.name)).toEqual([name]);
+    expect(result.issues).toMatchObject([
+      { kind: 'suspicious-name', file: '701.csv', row: 2, studentId: '1120003' },
+    ]);
+    expect(result.issues[0]?.message).toContain(shown);
+    expect(result.issues[0]?.message).toContain('CSV UTF-8');
+  });
+
+  it('一般姓名（含罕用字）不列為問題', () => {
+    const result = normalizeTable(table('701.csv', HEADERS, [['701', '3', '1120003', '甯靚翾', ...GOOD]]), config);
+
+    expect(result.issues).toEqual([]);
+  });
+
   it('不認得的欄位列為警告但照常匯入', () => {
     const result = normalizeTable(
       table('701.csv', [...HEADERS, '社團'], [['701', '1', '1120001', '王小明', ...GOOD, '桌球']]),

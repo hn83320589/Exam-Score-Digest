@@ -2,7 +2,7 @@ import type { DigestConfig } from '../config/schema.js';
 import type { RawRow, RawTable } from '../io/raw-table.js';
 import { mapHeaders, type ColumnMap } from './map-headers.js';
 import { parseScore } from './parse-score.js';
-import { normalizeCell } from './text.js';
+import { findUnreadableChars, normalizeCell } from './text.js';
 import type { ImportIssue, Score, StudentRecord, SubjectName } from './types.js';
 
 export interface NormalizeResult {
@@ -15,7 +15,9 @@ export function classFromFileName(file: string): string | undefined {
   return /\d{3}/.exec(file)?.[0];
 }
 
-type RowResult = { ok: true; student: StudentRecord } | { ok: false; issue: ImportIssue } | { ok: 'blank' };
+type RowResult =
+  | { ok: true; student: StudentRecord; warnings: ImportIssue[] }
+  | { ok: false; issue: ImportIssue } | { ok: 'blank' };
 
 function normalizeRow(
   row: RawRow,
@@ -61,9 +63,23 @@ function normalizeRow(
     };
   }
 
+  const name = cell(columns.name);
+  const unreadable = findUnreadableChars(name);
+  const warnings: ImportIssue[] =
+    unreadable.length === 0
+      ? []
+      : [
+          {
+            kind: 'suspicious-name',
+            ...at,
+            studentId,
+            message: `姓名「${name}」含無法辨識的字元（${unreadable.join('、')}），可能是罕用字或造字在存檔時遺失；已照常匯入，請導師改用「CSV UTF-8」或 .xlsx 重新匯出後再確認`,
+          },
+        ];
   return {
     ok: true,
-    student: { studentId, className, seat, name: cell(columns.name), scores, source: { file, row: row.rowNumber } },
+    student: { studentId, className, seat, name, scores, source: { file, row: row.rowNumber } },
+    warnings,
   };
 }
 
@@ -90,7 +106,10 @@ export function normalizeTable(table: RawTable, config: DigestConfig): Normalize
   const students: StudentRecord[] = [];
   for (const row of table.rows) {
     const result = normalizeRow(row, table.file, mapped.columns, fileClass, config);
-    if (result.ok === true) students.push(result.student);
+    if (result.ok === true) {
+      students.push(result.student);
+      issues.push(...result.warnings);
+    }
     else if (result.ok === false) issues.push(result.issue);
   }
   return { students, issues };

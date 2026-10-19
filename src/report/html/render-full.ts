@@ -19,7 +19,11 @@ const ISSUE_LABELS: Record<ImportIssueKind, string> = {
   'missing-class': '缺少班級',
   'invalid-score': '分數錯誤',
   'duplicate-id': '學號重複',
+  'suspicious-name': '姓名含無法辨識的字元',
 };
+
+/** 這些問題的資料仍照常匯入，以警示色標示；其餘為資料列被跳過。 */
+const WARNING_KINDS: ReadonlySet<ImportIssueKind> = new Set(['unknown-column', 'suspicious-name']);
 
 function identityCells(s: StudentSummary): SafeHtml {
   const { student } = s;
@@ -111,7 +115,7 @@ function issuesTable(caption: string, issues: readonly ImportIssue[]): SafeHtml 
   return tableWrap(html`<caption>${caption}（${issues.length} 筆）</caption>
 <thead><tr><th>檔案</th><th class="num">列號</th><th>類型</th><th>學號</th><th>說明</th><th>另一來源</th></tr></thead>
 <tbody>${issues.map(
-    (i) => html`<tr><td>${i.file}</td><td class="num">${i.row ?? EMPTY}</td><td><span class="badge ${i.kind === 'unknown-column' ? 'warn' : 'bad'}">${ISSUE_LABELS[i.kind]}</span></td><td>${i.studentId ?? EMPTY}</td><td>${i.message}</td><td>${
+    (i) => html`<tr><td>${i.file}</td><td class="num">${i.row ?? EMPTY}</td><td><span class="badge ${WARNING_KINDS.has(i.kind) ? 'warn' : 'bad'}">${ISSUE_LABELS[i.kind]}</span></td><td>${i.studentId ?? EMPTY}</td><td>${i.message}</td><td>${
       i.related?.map((r) => `${r.file} 第 ${r.row} 列`).join('、') ?? EMPTY
     }</td></tr>`,
   )}</tbody>`);
@@ -120,7 +124,7 @@ function issuesTable(caption: string, issues: readonly ImportIssue[]): SafeHtml 
 function issuesSection(model: ReportModel): SafeHtml {
   return html`<section id="issues">
 <h2>匯入問題清單</h2>
-<p class="note">列號與 Excel 中看到的列號相同（標題列為第 1 列）。分數錯誤、缺少學號、學號重複的資料列已跳過，其餘資料照常匯入。</p>
+<p class="note">列號與 Excel 中看到的列號相同（標題列為第 1 列）。分數錯誤、缺少學號、學號重複的資料列已跳過；未知欄位與姓名含無法辨識字元（黃色標示）的資料仍照常匯入。</p>
 ${issuesTable('本次段考', model.issues)}
 ${model.previousIssues === null ? '' : issuesTable('上次段考', model.previousIssues)}
 </section>`;

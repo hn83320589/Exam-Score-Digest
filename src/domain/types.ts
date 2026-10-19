@@ -34,7 +34,8 @@ export type ImportIssueKind =
   | 'missing-id'
   | 'missing-class'
   | 'invalid-score'
-  | 'duplicate-id';
+  | 'duplicate-id'
+  | 'suspicious-name';
 
 export interface ImportIssue {
   kind: ImportIssueKind;

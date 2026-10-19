@@ -3,12 +3,20 @@ import { extname, join } from 'node:path';
 import type { DigestConfig } from '../config/schema.js';
 import { dedupeStudents } from '../domain/dedupe.js';
 import { normalizeTable } from '../domain/normalize.js';
-import { classSeatKey, type ImportIssue, type StudentRecord } from '../domain/types.js';
+import { classSeatKey, type ImportIssue, type ImportIssueKind, type StudentRecord } from '../domain/types.js';
 import type { RawTable } from './raw-table.js';
 import { readCsv } from './read-csv.js';
 import { readXlsx } from './read-xlsx.js';
 
 const SUPPORTED = new Set(['.csv', '.xlsx']);
+
+/** 會讓資料列被跳過的問題類型；其餘（未知欄位、姓名警告）照常匯入。 */
+const SKIPPED_ROW_KINDS: ReadonlySet<ImportIssueKind> = new Set([
+  'missing-id',
+  'missing-class',
+  'invalid-score',
+  'duplicate-id',
+]);
 
 export interface ImportResult {
   files: string[];
@@ -67,8 +75,9 @@ export async function importFolder(dir: string, config: DigestConfig): Promise<I
 
   const deduped = dedupeStudents(students);
   const allIssues = [...issues, ...deduped.issues].sort(compareIssues);
-  const erroredIds = new Set(allIssues.flatMap((i) => (i.studentId === undefined ? [] : [i.studentId])));
-  const erroredSeats = new Set(allIssues.flatMap((i) => (i.classSeat === undefined ? [] : [classSeatKey(i.classSeat)])));
+  const skipped = allIssues.filter((i) => SKIPPED_ROW_KINDS.has(i.kind));
+  const erroredIds = new Set(skipped.flatMap((i) => (i.studentId === undefined ? [] : [i.studentId])));
+  const erroredSeats = new Set(skipped.flatMap((i) => (i.classSeat === undefined ? [] : [classSeatKey(i.classSeat)])));
   return {
     files,
     students: deduped.students,
