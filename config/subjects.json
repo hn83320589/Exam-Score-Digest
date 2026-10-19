@@ -1,0 +1,20 @@
+{
+  "subjects": [
+    { "name": "國文", "aliases": ["國語文", "國語"] },
+    { "name": "英語", "aliases": ["英文", "英語文"] },
+    { "name": "數學", "aliases": ["數學科"] },
+    { "name": "自然", "aliases": ["自然科學", "自然與生活科技"] },
+    { "name": "歷史", "aliases": ["歷史科"] },
+    { "name": "地理", "aliases": ["地理科"] },
+    { "name": "公民", "aliases": ["公民與社會", "公民科"] },
+    { "name": "健康", "aliases": ["健康教育", "健教"] }
+  ],
+  "fields": {
+    "className": ["班級", "班別"],
+    "seat": ["座號"],
+    "studentId": ["學號"],
+    "name": ["姓名", "學生姓名"]
+  },
+  "ignoreColumns": ["總分", "平均", "名次", "備註"],
+  "absentTokens": ["缺", "缺考"]
+}
