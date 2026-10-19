@@ -1,0 +1,39 @@
+{
+  "name": "exam-score-digest",
+  "version": "0.1.0",
+  "description": "國中段考成績彙整與分析工具：匯入各班成績檔，產出離線 HTML 報表與 .xlsx 成績總表",
+  "type": "module",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=22.12"
+  },
+  "bin": {
+    "exam-digest": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "config"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepare": "npm run build",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "csv-parse": "^7.0.3",
+    "exceljs": "^4.4.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.20.5",
+    "eslint": "^10.13.0",
+    "iconv-lite": "^0.7.3",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.71.2",
+    "vitest": "^5.0.5"
+  }
+}
