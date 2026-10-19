@@ -24,6 +24,7 @@ export function dedupeStudents(students: readonly StudentRecord[]): DedupeResult
       kind: 'duplicate-id',
       ...student.source,
       studentId: student.studentId,
+      classSeat: { className: student.className, seat: student.seat },
       related: [first.source],
       message: `學號 ${student.studentId} 與 ${first.source.file} 第 ${first.source.row} 列重複，已跳過此列（保留先出現的資料）`,
     });

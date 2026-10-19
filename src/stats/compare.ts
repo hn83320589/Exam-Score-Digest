@@ -1,3 +1,4 @@
+import { classSeatKey } from '../domain/types.js';
 import type { StudentSummary } from './student-summary.js';
 
 export const TOP_MOVERS = 10;
@@ -26,9 +27,31 @@ export interface ComparisonResult {
 }
 
 export interface CompareOptions {
-  /** 本次段考中因資料錯誤被跳過的學號。 */
+  /** 因資料錯誤被跳過的學號。 */
   currentErroredIds: ReadonlySet<string>;
   previousErroredIds: ReadonlySet<string>;
+  /** 因資料錯誤被跳過的列之班級與座號（classSeatKey）。 */
+  currentErroredSeats: ReadonlySet<string>;
+  previousErroredSeats: ReadonlySet<string>;
+}
+
+/**
+ * 學號只在一次段考出現時，判斷是否其實是另一次的資料錯誤（而非轉學）。
+ * 回傳無法比較的原因；確實是轉學時回傳 null。
+ */
+function erroredInOther(
+  summary: StudentSummary,
+  otherLabel: string,
+  erroredIds: ReadonlySet<string>,
+  erroredSeats: ReadonlySet<string>,
+): string | null {
+  if (erroredIds.has(summary.student.studentId)) {
+    return `${otherLabel}段考的資料有錯誤而未匯入，無法比較`;
+  }
+  if (erroredSeats.has(classSeatKey(summary.student))) {
+    return `${otherLabel}段考同班同座號的資料列有錯誤（可能是學號空白或誤植），無法比較`;
+  }
+  return null;
 }
 
 interface Fraction {
@@ -66,11 +89,9 @@ export function compareExams(
   for (const now of current) {
     const before = previousById.get(now.student.studentId);
     if (before === undefined) {
-      if (options.previousErroredIds.has(now.student.studentId)) {
-        unmatched.push({ summary: now, exam: 'current', reason: '上次段考的資料有錯誤而未匯入，無法比較' });
-      } else {
-        transferredIn.push(now);
-      }
+      const reason = erroredInOther(now, '上次', options.previousErroredIds, options.previousErroredSeats);
+      if (reason === null) transferredIn.push(now);
+      else unmatched.push({ summary: now, exam: 'current', reason });
     } else if (now.takenCount === 0 || before.takenCount === 0) {
       unmatched.push({ summary: now, exam: 'current', reason: '其中一次段考全科缺考，無法比較' });
     } else {
@@ -85,11 +106,9 @@ export function compareExams(
   const transferredOut: StudentSummary[] = [];
   for (const before of previous) {
     if (currentIds.has(before.student.studentId)) continue;
-    if (options.currentErroredIds.has(before.student.studentId)) {
-      unmatched.push({ summary: before, exam: 'previous', reason: '本次段考的資料有錯誤而未匯入，無法比較' });
-    } else {
-      transferredOut.push(before);
-    }
+    const reason = erroredInOther(before, '本次', options.currentErroredIds, options.currentErroredSeats);
+    if (reason === null) transferredOut.push(before);
+    else unmatched.push({ summary: before, exam: 'previous', reason });
   }
 
   const sortedDesc = [...pairs].sort(

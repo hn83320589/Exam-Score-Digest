@@ -7,7 +7,7 @@ import { makeStudent, SUBJECTS, uniform } from './helpers.js';
 
 function model(students: StudentRecord[]) {
   return buildReportModel({
-    current: { files: [], students, issues: [], duplicateIds: new Set(['0000123']), erroredIds: new Set() },
+    current: { files: [], students, issues: [], duplicateIds: new Set(['0000123']), erroredIds: new Set(), erroredSeats: new Set() },
     previous: null,
     subjects: SUBJECTS,
   });

@@ -3,7 +3,7 @@ import { extname, join } from 'node:path';
 import type { DigestConfig } from '../config/schema.js';
 import { dedupeStudents } from '../domain/dedupe.js';
 import { normalizeTable } from '../domain/normalize.js';
-import type { ImportIssue, StudentRecord } from '../domain/types.js';
+import { classSeatKey, type ImportIssue, type StudentRecord } from '../domain/types.js';
 import type { RawTable } from './raw-table.js';
 import { readCsv } from './read-csv.js';
 import { readXlsx } from './read-xlsx.js';
@@ -15,8 +15,10 @@ export interface ImportResult {
   students: StudentRecord[];
   issues: ImportIssue[];
   duplicateIds: ReadonlySet<string>;
-  /** 因資料錯誤被跳過、但有學號的學生；比較時不可誤判為轉學。 */
+  /** 被跳過的資料列上的學號（含重複學號列）；比較時不可誤判為轉學。 */
   erroredIds: ReadonlySet<string>;
+  /** 因資料錯誤被跳過的列之班級與座號（classSeatKey）；學號空白或誤植時用來避免誤判為轉學。 */
+  erroredSeats: ReadonlySet<string>;
 }
 
 export async function listScoreFiles(dir: string): Promise<string[]> {
@@ -64,15 +66,16 @@ export async function importFolder(dir: string, config: DigestConfig): Promise<I
   }
 
   const deduped = dedupeStudents(students);
-  const erroredIds = new Set(
-    issues.flatMap((issue) => (issue.studentId === undefined ? [] : [issue.studentId])),
-  );
+  const allIssues = [...issues, ...deduped.issues].sort(compareIssues);
+  const erroredIds = new Set(allIssues.flatMap((i) => (i.studentId === undefined ? [] : [i.studentId])));
+  const erroredSeats = new Set(allIssues.flatMap((i) => (i.classSeat === undefined ? [] : [classSeatKey(i.classSeat)])));
   return {
     files,
     students: deduped.students,
-    issues: [...issues, ...deduped.issues].sort(compareIssues),
+    issues: allIssues,
     duplicateIds: deduped.duplicateIds,
     erroredIds,
+    erroredSeats,
   };
 }
 

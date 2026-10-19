@@ -4,7 +4,12 @@ import { summarizeStudent } from '../src/stats/student-summary.js';
 import { makeStudent, SUBJECTS, uniform, type ScoreInput } from './helpers.js';
 
 const summarize = (score: ScoreInput, studentId: string) => summarizeStudent(uniform(score, { studentId }), SUBJECTS);
-const NO_ERRORS = { currentErroredIds: new Set<string>(), previousErroredIds: new Set<string>() };
+const NO_ERRORS = {
+  currentErroredIds: new Set<string>(),
+  previousErroredIds: new Set<string>(),
+  currentErroredSeats: new Set<string>(),
+  previousErroredSeats: new Set<string>(),
+};
 
 describe('compareExams', () => {
   // 學生 s00…s24，上次都是 50 分，本次分別是 38…62 分（差值 −12 … +12）
@@ -61,6 +66,7 @@ describe('compareExams', () => {
 
   it('另一次的資料因錯誤被跳過時，標示為無法比較而不是轉學', () => {
     const result = compareExams([summarize(70, 'err-prev')], [summarize(60, 'err-now')], {
+      ...NO_ERRORS,
       currentErroredIds: new Set(['err-now']),
       previousErroredIds: new Set(['err-prev']),
     });
@@ -71,6 +77,19 @@ describe('compareExams', () => {
       ['err-prev', 'current'],
       ['err-now', 'previous'],
     ]);
+  });
+
+  it('另一次同班同座號的資料列有錯誤時（例如學號空白或誤植），標示為無法比較而不是轉學', () => {
+    const before = summarizeStudent(uniform(60, { studentId: 'lost', className: '709', seat: '12' }), SUBJECTS);
+
+    const result = compareExams([], [before], {
+      ...NO_ERRORS,
+      currentErroredSeats: new Set(['709#12']),
+    });
+
+    expect(result.transferredOut).toEqual([]);
+    expect(result.unmatched.map((u) => u.exam)).toEqual(['previous']);
+    expect(result.unmatched[0]?.reason).toContain('同班同座號');
   });
 
   it('有缺考的學生以實考科目平均比較（依決議全部納入）', () => {

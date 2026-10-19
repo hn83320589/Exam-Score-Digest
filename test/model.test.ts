@@ -11,6 +11,7 @@ function imported(students: StudentRecord[], extra: Partial<ImportResult> = {}):
     issues: [],
     duplicateIds: new Set(),
     erroredIds: new Set(),
+    erroredSeats: new Set(),
     ...extra,
   };
 }

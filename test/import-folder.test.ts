@@ -45,7 +45,8 @@ describe('importFolder', () => {
 
     expect(result.students.map((s) => s.studentId)).toEqual(['1120001']);
     expect(result.duplicateIds).toEqual(new Set(['1120001']));
-    expect(result.erroredIds).toEqual(new Set(['1120002']));
+    expect(result.erroredIds).toEqual(new Set(['1120001', '1120002']));
+    expect(result.erroredSeats).toEqual(new Set(['701#2', '702#1']));
     expect(result.issues.map((i) => [i.kind, i.file])).toEqual([
       ['invalid-score', '701.csv'],
       ['duplicate-id', '702.csv'],

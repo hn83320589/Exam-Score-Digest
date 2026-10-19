@@ -31,7 +31,13 @@ function normalizeRow(
     return { ok: 'blank' };
   }
 
-  const at = { file, row: row.rowNumber };
+  const className = cell(columns.className) || fileClass;
+  const seat = cell(columns.seat);
+  const at = {
+    file,
+    row: row.rowNumber,
+    ...(className !== undefined && seat !== '' && { classSeat: { className, seat } }),
+  };
   const studentId = cell(columns.studentId);
   if (studentId === '') {
     return { ok: false, issue: { kind: 'missing-id', ...at, message: '缺少學號' } };
@@ -48,7 +54,6 @@ function normalizeRow(
     return { ok: false, issue: { kind: 'invalid-score', ...at, studentId, message: errors.join('；') } };
   }
 
-  const className = cell(columns.className) || fileClass;
   if (className === undefined) {
     return {
       ok: false,
@@ -58,7 +63,7 @@ function normalizeRow(
 
   return {
     ok: true,
-    student: { studentId, className, seat: cell(columns.seat), name: cell(columns.name), scores, source: at },
+    student: { studentId, className, seat, name: cell(columns.name), scores, source: { file, row: row.rowNumber } },
   };
 }
 

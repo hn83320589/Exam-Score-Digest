@@ -30,6 +30,8 @@ export interface ReportModel {
   comparison: ComparisonResult | null;
   issues: ImportIssue[];
   previousIssues: ImportIssue[] | null;
+  /** 有重複的學號；保留下來的那筆在報表中要標示。 */
+  duplicateIds: ReadonlySet<string>;
 }
 
 export interface ReportInput {
@@ -66,7 +68,12 @@ export function buildReportModel({ current, previous, subjects }: ReportInput): 
       : compareExams(
           summaries,
           previous.students.map((s) => summarizeStudent(s, subjects)),
-          { currentErroredIds: current.erroredIds, previousErroredIds: previous.erroredIds },
+          {
+            currentErroredIds: current.erroredIds,
+            previousErroredIds: previous.erroredIds,
+            currentErroredSeats: current.erroredSeats,
+            previousErroredSeats: previous.erroredSeats,
+          },
         );
 
   return {
@@ -80,5 +87,6 @@ export function buildReportModel({ current, previous, subjects }: ReportInput): 
     comparison,
     issues: current.issues,
     previousIssues: previous?.issues ?? null,
+    duplicateIds: current.duplicateIds,
   };
 }

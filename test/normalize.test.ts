@@ -65,6 +65,8 @@ describe('normalizeTable', () => {
     expect(result.issues[0]?.message).toContain('國文');
     expect(result.issues[0]?.message).toContain('101');
     expect(result.issues[0]?.studentId).toBe('1120101');
+    // 學號空白的列也記下班級與座號，供比較功能判斷
+    expect(result.issues[3]?.classSeat).toEqual({ className: '703', seat: '4' });
   });
 
   it('缺考保留為 absent，不視為錯誤', () => {
