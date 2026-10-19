@@ -11,7 +11,7 @@ async function listFiles(dir: string): Promise<string[]> {
 }
 
 describe('原始碼不含任何網址', () => {
-  it('src、config、scripts 中搜尋不到 http:// 或 https://', async () => {
+  it('src、config、scripts 中搜尋不到任何網址（http／https）', async () => {
     const files = (await Promise.all(SOURCE_DIRS.map((d) => listFiles(join(ROOT, d))))).flat();
     const offenders: string[] = [];
     for (const file of files) {
