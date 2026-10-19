@@ -71,7 +71,7 @@ export function scoreBars(title: string, items: readonly BarItem[], reference?: 
   const rowH = 26;
   const barH = 16;
   const margin = { top: reference === undefined ? 8 : 24, right: 56, bottom: 26, left: 44 };
-  const width = 640;
+  const width = 960;
   const plotW = width - margin.left - margin.right;
   const height = margin.top + items.length * rowH + margin.bottom;
   const baseline = margin.left;

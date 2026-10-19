@@ -67,7 +67,7 @@ ${
 function moversTable(caption: string, entries: readonly ComparisonEntry[]): SafeHtml {
   if (entries.length === 0) return html`<h3>${caption}</h3><p class="empty">無。</p>`;
   return tableWrap(html`<caption>${caption}</caption>
-<thead><tr><th class="num">#</th>${IDENTITY_HEADERS}<th class="num">上次平均</th><th class="num">本次平均</th><th class="num">差值</th><th class="num">缺考科目（上次／本次）</th></tr></thead>
+<thead><tr><th class="num">#</th>${IDENTITY_HEADERS}<th class="num">上次平均</th><th class="num">本次平均</th><th class="num">差值</th><th class="num">缺考 上次／本次</th></tr></thead>
 <tbody>${entries.map(
     (e, i) => html`<tr><td class="num">${i + 1}</td>${identityCells(e.current)}<td class="num">${formatFixed(e.previous.average)}</td><td class="num">${formatFixed(e.current.average)}</td><td class="num">${formatSigned(e.delta)}</td><td class="num">${e.previous.absentCount}／${e.current.absentCount}</td></tr>`,
   )}</tbody>`);
