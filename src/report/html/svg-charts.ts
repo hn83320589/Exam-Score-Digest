@@ -1,6 +1,6 @@
 import { html, type SafeHtml } from './html.js';
 
-// 內嵌於 HTML5 的 SVG 不需要 xmlns 屬性；省略它，輸出中就不會出現任何 http:// 字串。
+// 內嵌於 HTML5 的 SVG 不需要 xmlns 屬性；省略它，輸出中就不會出現任何網址字串（離線驗收要求）。
 
 const BAR_RADIUS = 4;
 
