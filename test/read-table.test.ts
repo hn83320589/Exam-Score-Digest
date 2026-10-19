@@ -45,6 +45,17 @@ describe('readXlsx', () => {
     ]);
   });
 
+  it('有公式但沒有快取計算結果的儲存格，記錄其欄位而不是當成空白', async () => {
+    const bytes = await buildXlsx((sheet) => {
+      sheet.addRow(['學號', '國文', '英語']);
+      sheet.addRow(['1120001', { formula: 'B1+1' }, { formula: '80', result: 80 }]);
+    });
+
+    const table = await readXlsx('701.xlsx', bytes);
+
+    expect(table.rows).toEqual([{ rowNumber: 2, cells: ['1120001', '', '80'], uncachedFormulaColumns: [1] }]);
+  });
+
   it('公式計算產生的浮點誤差還原為一位小數', async () => {
     const bytes = await buildXlsx((sheet) => {
       sheet.addRow(['國文']);

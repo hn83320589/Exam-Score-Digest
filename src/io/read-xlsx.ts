@@ -22,6 +22,17 @@ function cellToText(value: ExcelJS.CellValue): string {
   return '';
 }
 
+/** 公式儲存格（含共用公式）但沒有快取計算結果。 */
+function isUncachedFormula(value: ExcelJS.CellValue): boolean {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !(value instanceof Date) &&
+    ('formula' in value || 'sharedFormula' in value) &&
+    value.result === undefined
+  );
+}
+
 /** 只讀第一個工作表；完全空白的列 ExcelJS 不會回傳。 */
 export async function readXlsx(file: string, bytes: Uint8Array): Promise<RawTable> {
   const workbook = new ExcelJS.Workbook();
@@ -39,7 +50,12 @@ export async function readXlsx(file: string, bytes: Uint8Array): Promise<RawTabl
   const rows: RawTable['rows'] = [];
   sheet.eachRow((row, rowNumber) => {
     if (rowNumber === 1) headers.push(...toCells(row));
-    else rows.push({ rowNumber, cells: toCells(row) });
+    else {
+      const uncached = Array.from({ length: columnCount }, (_, i) => i).filter((i) =>
+        isUncachedFormula(row.getCell(i + 1).value),
+      );
+      rows.push({ rowNumber, cells: toCells(row), ...(uncached.length > 0 && { uncachedFormulaColumns: uncached }) });
+    }
   });
 
   return { file, encoding: 'xlsx', headers, rows };

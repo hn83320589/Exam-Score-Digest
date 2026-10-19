@@ -69,6 +69,19 @@ describe('normalizeTable', () => {
     expect(result.issues[3]?.classSeat).toEqual({ className: '703', seat: '4' });
   });
 
+  it('科目欄是沒有計算結果的公式時列為錯誤，不當成缺考', () => {
+    const raw = table('710.xlsx', HEADERS, [['710', '1', '1121001', '王小明', '', ...GOOD.slice(1)]]);
+    const row = raw.rows[0];
+    if (row !== undefined) row.uncachedFormulaColumns = [4];
+
+    const result = normalizeTable(raw, config);
+
+    expect(result.students).toEqual([]);
+    expect(result.issues).toMatchObject([{ kind: 'invalid-score', file: '710.xlsx', row: 2 }]);
+    expect(result.issues[0]?.message).toContain('國文');
+    expect(result.issues[0]?.message).toContain('公式沒有計算結果');
+  });
+
   it('缺考保留為 absent，不視為錯誤', () => {
     const result = normalizeTable(
       table('701.csv', HEADERS, [['701', '1', '1120001', '王小明', '缺', '', ...GOOD.slice(2)]]),

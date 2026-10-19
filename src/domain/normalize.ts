@@ -48,6 +48,10 @@ function normalizeRow(
   const scores = new Map<SubjectName, Score>();
   const errors: string[] = [];
   for (const [subject, index] of columns.subjects) {
+    if (row.uncachedFormulaColumns?.includes(index) === true) {
+      errors.push(`${subject}：公式沒有計算結果（請在 Excel 中開啟後重新存檔），不可視為缺考`);
+      continue;
+    }
     const parsed = parseScore(row.cells[index] ?? '', config.absentTokens);
     if (parsed.kind === 'invalid') errors.push(`${subject}：${parsed.reason}`);
     else scores.set(subject, parsed);
